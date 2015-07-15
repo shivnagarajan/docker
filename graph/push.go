@@ -505,10 +505,10 @@ func (s *TagStore) Push(localName string, imagePushConfig *ImagePushConfig) erro
 		return err
 	}
 
-	if _, err := s.poolAdd("push", repoInfo.LocalName); err != nil {
+	if _, err := s.poolAdd("push", repoInfo.LocalName+imagePushConfig.Tag+"push"); err != nil {
 		return err
 	}
-	defer s.poolRemove("push", repoInfo.LocalName)
+	defer s.poolRemove("push", repoInfo.LocalName+imagePushConfig.Tag+"push")
 
 	endpoint, err := repoInfo.GetEndpoint(imagePushConfig.MetaHeaders)
 	if err != nil {

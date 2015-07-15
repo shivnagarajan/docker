@@ -265,7 +265,7 @@ func (s *TagStore) pullRepository(r *registry.Session, out io.Writer, repoInfo *
 			}
 
 			// ensure no two downloads of the same image happen at the same time
-			if c, err := s.poolAdd("pull", "img:"+img.ID); err != nil {
+			if c, err := s.poolAdd("pull", "img:"+img.ID+"pull"); err != nil {
 				if c != nil {
 					out.Write(sf.FormatProgress(stringid.TruncateID(img.ID), "Layer already being pulled by another client. Waiting.", nil))
 					<-c
@@ -276,7 +276,7 @@ func (s *TagStore) pullRepository(r *registry.Session, out io.Writer, repoInfo *
 				errors <- nil
 				return
 			}
-			defer s.poolRemove("pull", "img:"+img.ID)
+			defer s.poolRemove("pull", "img:"+img.ID+"pull")
 
 			out.Write(sf.FormatProgress(stringid.TruncateID(img.ID), fmt.Sprintf("Pulling image (%s) from %s", img.Tag, repoInfo.CanonicalName), nil))
 			success := false
@@ -365,11 +365,11 @@ func (s *TagStore) pullImage(r *registry.Session, out io.Writer, imgID, endpoint
 		id := history[i]
 
 		// ensure no two downloads of the same layer happen at the same time
-		if c, err := s.poolAdd("pull", "layer:"+id); err != nil {
+		if c, err := s.poolAdd("pull", "layer:"+id+"pull"); err != nil {
 			logrus.Debugf("Image (id: %s) pull is already running, skipping: %v", id, err)
 			<-c
 		}
-		defer s.poolRemove("pull", "layer:"+id)
+		defer s.poolRemove("pull", "layer:"+id+"pull")
 
 		if !s.graph.Exists(id) {
 			out.Write(sf.FormatProgress(stringid.TruncateID(id), "Pulling metadata", nil))
@@ -565,7 +565,7 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 		downloadFunc := func(di *downloadInfo) error {
 			logrus.Debugf("pulling blob %q to V1 img %s", sumStr, img.ID)
 
-			if c, err := s.poolAdd("pull", "img:"+img.ID); err != nil {
+			if c, err := s.poolAdd("pull", "img:"+img.ID+"pull"); err != nil {
 				if c != nil {
 					out.Write(sf.FormatProgress(stringid.TruncateID(img.ID), "Layer already being pulled by another client. Waiting.", nil))
 					<-c
@@ -574,7 +574,7 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 					logrus.Debugf("Image (id: %s) pull is already running, skipping: %v", img.ID, err)
 				}
 			} else {
-				defer s.poolRemove("pull", "img:"+img.ID)
+				defer s.poolRemove("pull", "img:"+img.ID+"pull")
 				tmpFile, err := ioutil.TempFile("", "GetV2ImageBlob")
 				if err != nil {
 					return err
